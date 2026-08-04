@@ -1,0 +1,7 @@
+[
+  {
+    "username": "harii",
+    "password": "$argon2id$v=19$m=65536,p=4,t=3$Iyud9NZSMJcnrRbD7F2/vw$Eh6H7ukCnJ4lCDIWT6Tt2aMDuVUltd09BP9Xa4MGGms",
+    "refreshToken": "$argon2id$v=19$m=65536,p=4,t=3$TMt0xwBK/qYl4zbzHuJy+w$luwNF0Nar1qEEmmpxI+2hjnlD75awAIeLyIQOqJAe5E"
+  }
+]
