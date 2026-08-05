@@ -73,6 +73,8 @@ func (s *AuthService) Login(username, password string) (string, string, error) {
 		}
 	}
 
+	fmt.Println(*foundUser)
+
 	if foundUser == nil {
 		return "", "", errors.New("invalid credentials")
 	}

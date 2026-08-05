@@ -14,9 +14,7 @@ type AuthController struct {
 }
 
 type LoginResponse struct {
-	Message      string `json:"message"`
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
+	Message string `json:"message"`
 }
 
 func NewUserController(service *services.AuthService) *AuthController {
@@ -66,12 +64,31 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 
 	// Send JSON
 	w.Header().Set("Content-Type", "application/json")
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   60 * 15,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   60 * 60 * 24 * 7,
+	})
+
 	w.WriteHeader(http.StatusOK)
 
 	response := LoginResponse{
-		Message:      "Logged in successfully",
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		Message: "Logged in successfully",
 	}
 
 	json.NewEncoder(w).Encode(response)
