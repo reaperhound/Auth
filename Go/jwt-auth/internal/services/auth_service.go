@@ -55,3 +55,27 @@ func hashPassword(password string) (string, error) {
 
 	return string(hashedPass), nil
 }
+
+func (s *AuthService) Login(username, password string) error {
+	users, err := s.fileService.ReadUsers()
+	if err != nil {
+		return fmt.Errorf("failed to read users: %w", err)
+	}
+
+	for _, u := range users {
+		if u.Username == username {
+			err := bcrypt.CompareHashAndPassword(
+				[]byte(u.Password),
+				[]byte(password),
+			)
+			if err != nil {
+				return errors.New("Invalid credentials")
+			}
+
+			fmt.Println("Logged in")
+			return nil
+		}
+	}
+
+	return errors.New("invalid credentials")
+}
