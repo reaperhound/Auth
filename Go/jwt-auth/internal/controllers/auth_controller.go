@@ -13,6 +13,12 @@ type AuthController struct {
 	authService *services.AuthService
 }
 
+type LoginResponse struct {
+	Message      string `json:"message"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 func NewUserController(service *services.AuthService) *AuthController {
 	return &AuthController{
 		authService: service,
@@ -52,12 +58,23 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 	}
 
-	if err := c.authService.Login(user.Username, user.Password); err != nil {
+	accessToken, refreshToken, err := c.authService.Login(user.Username, user.Password)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Write([]byte("Logged in"))
+	// Send JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	response := LoginResponse{
+		Message:      "Logged in successfully",
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	json.NewEncoder(w).Encode(response)
 }
 
 func userBodyValidation(user models.User) error {

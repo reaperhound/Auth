@@ -10,10 +10,11 @@ import (
 
 type AuthService struct {
 	fileService *FileService
+	jwtService  *JwtServie
 }
 
-func NewAuthService(fileService *FileService) *AuthService {
-	return &AuthService{fileService: fileService}
+func NewAuthService(fileService *FileService, jwtService *JwtServie) *AuthService {
+	return &AuthService{fileService: fileService, jwtService: jwtService}
 }
 
 func (s *AuthService) SignUp(username, password string) error {
@@ -56,26 +57,36 @@ func hashPassword(password string) (string, error) {
 	return string(hashedPass), nil
 }
 
-func (s *AuthService) Login(username, password string) error {
+func (s *AuthService) Login(username, password string) (string, string, error) {
 	users, err := s.fileService.ReadUsers()
 	if err != nil {
-		return fmt.Errorf("failed to read users: %w", err)
+		return "", "", fmt.Errorf("failed to read users: %w", err)
 	}
+
+	// Find user and verify password
+	var foundUser *models.User
 
 	for _, u := range users {
 		if u.Username == username {
-			err := bcrypt.CompareHashAndPassword(
-				[]byte(u.Password),
-				[]byte(password),
-			)
-			if err != nil {
-				return errors.New("Invalid credentials")
-			}
-
-			fmt.Println("Logged in")
-			return nil
+			foundUser = &u
+			break
 		}
 	}
 
-	return errors.New("invalid credentials")
+	if foundUser == nil {
+		return "", "", errors.New("invalid credentials")
+	}
+
+	accessToken, err := s.jwtService.GenerateAccessTok(username)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate accessToken: %w", err)
+	}
+
+	refreshToken, err := s.jwtService.GenerateRefreshTok(username)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate refreshToken: %w", err)
+	}
+
+	fmt.Println("Logged in")
+	return accessToken, refreshToken, nil
 }

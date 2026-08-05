@@ -9,7 +9,9 @@ import (
 
 func main() {
 	fileSerivice := services.NewFileService()
-	authService := services.NewAuthService(fileSerivice)
+	jwtService := services.NewJwtService()
+
+	authService := services.NewAuthService(fileSerivice, jwtService)
 
 	authController := controllers.NewUserController(authService)
 
