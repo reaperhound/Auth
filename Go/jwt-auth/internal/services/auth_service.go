@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"jwt-auth/internal/models"
 	"os"
@@ -37,6 +38,13 @@ func (s *AuthService) appendUser(user models.User) error {
 	data, err := os.ReadFile(fileName)
 	if err == nil {
 		json.Unmarshal(data, &users)
+	}
+
+	// Duplicate check
+	for _, u := range users {
+		if u.Username == user.Username {
+			return errors.New("username already exists")
+		}
 	}
 
 	// Add new user
