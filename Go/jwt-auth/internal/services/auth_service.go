@@ -1,60 +1,57 @@
 package services
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"jwt-auth/internal/models"
-	"os"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService struct{}
+type AuthService struct {
+	fileService *FileService
+}
 
-func NewAuthService() *AuthService {
-	return &AuthService{}
+func NewAuthService(fileService *FileService) *AuthService {
+	return &AuthService{fileService: fileService}
 }
 
 func (s *AuthService) SignUp(username, password string) error {
-	user := models.User{
-		Username: username,
-		Password: password,
-	}
+	users, err := s.fileService.ReadUsers()
 
-	err := s.appendUser(user)
 	if err != nil {
-		return fmt.Errorf("failed to sign up user: %w", err)
+		return fmt.Errorf("failed to read users: %w", err)
 	}
 
-	fmt.Println("Signed up")
-	return nil
-}
-
-func (s *AuthService) appendUser(user models.User) error {
-	const fileName = "users.json"
-
-	var users []models.User
-
-	// Read
-	data, err := os.ReadFile(fileName)
-	if err == nil {
-		json.Unmarshal(data, &users)
-	}
-
-	// Duplicate check
 	for _, u := range users {
-		if u.Username == user.Username {
+		if u.Username == username {
 			return errors.New("username already exists")
 		}
 	}
 
-	// Add new user
-	users = append(users, user)
-
-	// Convert back to json
-	updatedData, err := json.MarshalIndent(users, "", " ")
+	hashedPass, err := hashPassword(password)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	}
 
-	return os.WriteFile(fileName, updatedData, 0644)
+	users = append(users, models.User{
+		Username: username,
+		Password: hashedPass,
+	})
+
+	if err := s.fileService.WriteUsers(users); err != nil {
+		return fmt.Errorf("failed to signup user %w", err)
+	}
+
+	return nil
+}
+
+func hashPassword(password string) (string, error) {
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return "", errors.New("failed to hash password")
+	}
+
+	return string(hashedPass), nil
 }

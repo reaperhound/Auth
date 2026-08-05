@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	authService := services.NewAuthService()
+	fileSerivice := services.NewFileService()
+	authService := services.NewAuthService(fileSerivice)
 
 	authController := controllers.NewUserController(authService)
 
