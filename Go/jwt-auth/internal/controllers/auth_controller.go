@@ -94,6 +94,52 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func (c *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			http.Error(w, "Refresh Token not found", http.StatusUnauthorized)
+			return
+		}
+
+		http.Error(w, "Failed to read cookie", http.StatusInternalServerError)
+		return
+	}
+
+	refreshToken := cookie.Value
+	accessToken, refreshTokenNew, err := c.authService.Refresh(refreshToken)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   60 * 15,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshTokenNew,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   60 * 60 * 24 * 7,
+	})
+
+	w.WriteHeader(http.StatusOK)
+
+	response := LoginResponse{
+		Message: "Refreshed successfully",
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
 func userBodyValidation(user models.User) error {
 	if strings.TrimSpace(user.Username) == "" || strings.TrimSpace(user.Password) == "" {
 		return errors.New("username and password are required")

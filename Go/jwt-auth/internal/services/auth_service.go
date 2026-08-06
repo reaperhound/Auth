@@ -66,9 +66,9 @@ func (s *AuthService) Login(username, password string) (string, string, error) {
 	// Find user and verify password
 	var foundUser *models.User
 
-	for _, u := range users {
+	for i, u := range users {
 		if u.Username == username {
-			foundUser = &u
+			foundUser = &users[i]
 			break
 		}
 	}
@@ -89,6 +89,52 @@ func (s *AuthService) Login(username, password string) (string, string, error) {
 		return "", "", fmt.Errorf("failed to generate refreshToken: %w", err)
 	}
 
+	foundUser.RefreshToken = refreshToken
+
+	if err := s.fileService.WriteUsers(users); err != nil {
+		return "", "", err
+	}
+
 	fmt.Println("Logged in")
+	return accessToken, refreshToken, nil
+}
+
+func (s *AuthService) Refresh(refreshTokenStr string) (string, string, error) {
+	users, err := s.fileService.ReadUsers()
+	if err != nil {
+		return "", "", fmt.Errorf("failed to read users: %w", err)
+	}
+
+	claims, err := s.jwtService.ParseJwt(refreshTokenStr)
+	if err != nil {
+		return "", "", fmt.Errorf("token error: %w", err)
+	}
+	fmt.Println(claims)
+
+	var foundUser *models.User
+
+	for i, u := range users {
+		if u.Username == claims["username"] {
+			foundUser = &users[i]
+			break
+		}
+	}
+
+	accessToken, err := s.jwtService.GenerateAccessTok(foundUser.Username)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate accessToken: %w", err)
+	}
+
+	refreshToken, err := s.jwtService.GenerateRefreshTok(foundUser.Username)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate refreshToken: %w", err)
+	}
+
+	foundUser.RefreshToken = refreshToken
+
+	if err := s.fileService.WriteUsers(users); err != nil {
+		return "", "", err
+	}
+
 	return accessToken, refreshToken, nil
 }

@@ -17,6 +17,7 @@ func main() {
 
 	http.HandleFunc("/signup", authController.SignUp)
 	http.HandleFunc("/login", authController.Login)
+	http.HandleFunc("/refresh", authController.Refresh)
 
 	log.Println("Server running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

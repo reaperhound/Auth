@@ -1,14 +1,7 @@
 [
  {
-  "username": "hari",
-  "password": "haha"
- },
- {
-  "username": "lolan",
-  "password": "$2a$10$0ph/uPgobDakiVPKXqjTiuFp56aeOqPwIoUori.0ta3aXkYQzDse6"
- },
- {
   "username": "punisher",
-  "password": "$2a$10$f6XPECjsGH/6X2fhoHpHO.odmEaAnnHQjBBXGfammpNADaiF5gZue"
+  "password": "$2a$10$f6XPECjsGH/6X2fhoHpHO.odmEaAnnHQjBBXGfammpNADaiF5gZue",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODY2MDEwNzAsImlhdCI6IjIwMjYtMDgtMDZUMTE6MzQ6MzAuMDk5NjY0OTAxKzA1OjMwIiwidHlwZSI6InJlZnJlc2giLCJ1c2VybmFtZSI6InB1bmlzaGVyIn0.aaT482qPM82jinHNmBQYfhVc6m4vEu66cnRoeQzkxhQ"
  }
 ]
