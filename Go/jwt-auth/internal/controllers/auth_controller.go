@@ -2,11 +2,9 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
 	"jwt-auth/internal/models"
 	"jwt-auth/internal/services"
 	"net/http"
-	"strings"
 )
 
 type AuthController struct {
@@ -31,8 +29,9 @@ func (c *AuthController) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := userBodyValidation(user); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	if err := user.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	authErr := c.authService.SignUp(user.Username, user.Password)
@@ -50,10 +49,12 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
 	}
 
-	if err := userBodyValidation(user); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	if err := user.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	accessToken, refreshToken, err := c.authService.Login(user.Username, user.Password)
@@ -65,25 +66,7 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	// Send JSON
 	w.Header().Set("Content-Type", "application/json")
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    accessToken,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
-		MaxAge:   60 * 15,
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
-		MaxAge:   60 * 60 * 24 * 7,
-	})
+	setAuthCookie(w, accessToken, refreshToken)
 
 	w.WriteHeader(http.StatusOK)
 
@@ -111,6 +94,18 @@ func (c *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
+	setAuthCookie(w, accessToken, refreshTokenNew)
+
+	w.WriteHeader(http.StatusOK)
+
+	response := LoginResponse{
+		Message: "Refreshed successfully",
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func setAuthCookie(w http.ResponseWriter, accessToken, refreshToken string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "access_token",
 		Value:    accessToken,
@@ -123,27 +118,11 @@ func (c *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
-		Value:    refreshTokenNew,
+		Value:    refreshToken,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   60 * 60 * 24 * 7,
 	})
-
-	w.WriteHeader(http.StatusOK)
-
-	response := LoginResponse{
-		Message: "Refreshed successfully",
-	}
-
-	json.NewEncoder(w).Encode(response)
-}
-
-func userBodyValidation(user models.User) error {
-	if strings.TrimSpace(user.Username) == "" || strings.TrimSpace(user.Password) == "" {
-		return errors.New("username and password are required")
-	}
-
-	return nil
 }
