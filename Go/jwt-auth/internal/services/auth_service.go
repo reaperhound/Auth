@@ -105,7 +105,7 @@ func (s *AuthService) Refresh(refreshTokenStr string) (string, string, error) {
 		return "", "", fmt.Errorf("failed to read users: %w", err)
 	}
 
-	claims, err := s.jwtService.ParseJwt(refreshTokenStr)
+	claims, err := s.jwtService.ParseRefreshToken(refreshTokenStr)
 	if err != nil {
 		return "", "", fmt.Errorf("token error: %w", err)
 	}

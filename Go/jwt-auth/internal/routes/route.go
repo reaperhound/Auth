@@ -2,6 +2,7 @@ package routes
 
 import (
 	"jwt-auth/internal/controllers"
+	"jwt-auth/internal/middlewares"
 	"jwt-auth/internal/services"
 	"net/http"
 )
@@ -11,9 +12,19 @@ func SetupRouter() *http.ServeMux {
 	jwtService := services.NewJwtService()
 	authService := services.NewAuthService(fileSerivice, jwtService)
 	authController := controllers.NewUserController(authService)
+	protectedController := controllers.NewProtectedController()
+
+	public := http.NewServeMux()
+	RegisterAuthRoutes(public, authController)
+
+	// Protected
+	protected := http.NewServeMux()
+	RegisterProtectedRoutes(protected, protectedController)
+	protectedWithAuth := middlewares.AuthMiddlerWare(jwtService)(protected)
 
 	mux := http.NewServeMux()
-	RegisterAuthRoutes(mux, authController)
+	mux.Handle("/", public)
+	mux.Handle("/private/", http.StripPrefix("/private", protectedWithAuth))
 
 	return mux
 }

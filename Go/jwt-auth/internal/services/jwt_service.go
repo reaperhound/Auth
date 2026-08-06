@@ -42,12 +42,12 @@ func (s *JwtServie) GenerateRefreshTok(username string) (string, error) {
 	return token.SignedString([]byte(refreshSecret))
 }
 
-func (s *JwtServie) ParseJwt(tokenString string) (jwt.MapClaims, error) {
+func (s *JwtServie) parseJwt(tokenString, secret, expectedType string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(refreshSecret), nil
+		return []byte(secret), nil
 	})
 
 	if err != nil {
@@ -59,9 +59,17 @@ func (s *JwtServie) ParseJwt(tokenString string) (jwt.MapClaims, error) {
 		return nil, fmt.Errorf("invalid token")
 	}
 
-	if claims["type"] != "refresh" {
-		return nil, fmt.Errorf("not a refresh token")
+	if claims["type"] != expectedType {
+		return nil, fmt.Errorf("not a %s token", expectedType)
 	}
 
 	return claims, nil
+}
+
+func (s *JwtServie) ParseRefreshToken(tokenString string) (jwt.MapClaims, error) {
+	return s.parseJwt(tokenString, refreshSecret, "refresh")
+}
+
+func (s *JwtServie) ParseAccessToken(tokenString string) (jwt.MapClaims, error) {
+	return s.parseJwt(tokenString, accessSecret, "access")
 }
