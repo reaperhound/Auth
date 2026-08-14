@@ -7,13 +7,16 @@ import (
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/pquerna/otp/totp"
 )
 
-type TwoFAController struct{}
+type TwoFAController struct {
+	twoFAService *services.TwoFAService
+}
 
-func NewTwoFAController() *TwoFAController {
-	return &TwoFAController{}
+func NewTwoFAController(twoFaService *services.TwoFAService) *TwoFAController {
+	return &TwoFAController{
+		twoFAService: twoFaService,
+	}
 }
 
 func (c *TwoFAController) Enroll2FA(w http.ResponseWriter, r *http.Request) {
@@ -21,23 +24,13 @@ func (c *TwoFAController) Enroll2FA(w http.ResponseWriter, r *http.Request) {
 
 	username, ok := claims["username"].(string)
 	if !ok {
-		http.Error(w, "invalid token claims", http.StatusUnauthorized)
+		http.Error(w, "invalid token claims", http.StatusInternalServerError)
 		return
 	}
 
-	key, err := totp.Generate(totp.GenerateOpts{
-		Issuer:      "Go2FA",
-		AccountName: username,
-	})
-
+	data, err := c.twoFAService.GenerateEnrollment(username)
 	if err != nil {
-		http.Error(w, "failed to generate secret", http.StatusInternalServerError)
-		return
-	}
-
-	data, err := services.Generate2FA(key)
-	if err != nil {
-		http.Error(w, "failed to generate QR code", http.StatusInternalServerError)
+		http.Error(w, "failed to generate 2FA", http.StatusInternalServerError)
 		return
 	}
 

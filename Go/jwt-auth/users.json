@@ -2,7 +2,7 @@
  {
   "username": "punisher",
   "password": "$2a$10$f6XPECjsGH/6X2fhoHpHO.odmEaAnnHQjBBXGfammpNADaiF5gZue",
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODczMDY0MzYsImlhdCI6IjIwMjYtMDgtMTRUMTU6MzA6MzYuMTEwODIyNzc4KzA1OjMwIiwidHlwZSI6InJlZnJlc2giLCJ1c2VybmFtZSI6InB1bmlzaGVyIn0.RvXKFnJUssl30mPjXyvesmebBlN8KqstzXwpXwgANMM",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODczMDc1ODIsImlhdCI6IjIwMjYtMDgtMTRUMTU6NDk6NDIuNDE1MzM2ODI2KzA1OjMwIiwidHlwZSI6InJlZnJlc2giLCJ1c2VybmFtZSI6InB1bmlzaGVyIn0.CsG4eTDXqaUO1l4GP7e4dWoQwfC5hFqRidGrJpsuiY8",
   "totp_secret": "",
   "is_2fa_enabled": false
  }

@@ -12,7 +12,13 @@ type TwoFAData struct {
 	Secret string
 }
 
-func Generate2FA(key *otp.Key) (*TwoFAData, error) {
+type QRService struct{}
+
+func NewQRService() *QRService {
+	return &QRService{}
+}
+
+func (s *QRService) GenerateQRCode(key *otp.Key) (*TwoFAData, error) {
 	qr, err := qrcode.Encode(
 		key.URL(),
 		qrcode.Medium,
