@@ -1,8 +1,9 @@
 package controllers
 
 import (
-	"encoding/json"
+	"html/template"
 	"jwt-auth/internal/middlewares"
+	"jwt-auth/internal/services"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -34,9 +35,22 @@ func (c *TwoFAController) Enroll2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"secret": key.Secret(),
-		"qr_url": key.URL(),
-	})
+	data, err := services.Generate2FA(key)
+	if err != nil {
+		http.Error(w, "failed to generate QR code", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, err := template.ParseFiles("templates/2fa.html")
+	if err != nil {
+		http.Error(w, "failed to load template", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "failed to render template", http.StatusInternalServerError)
+		return
+	}
 }
