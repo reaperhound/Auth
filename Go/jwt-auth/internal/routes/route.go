@@ -12,14 +12,13 @@ func SetupRouter() *http.ServeMux {
 	jwtService := services.NewJwtService()
 	authService := services.NewAuthService(fileSerivice, jwtService)
 	authController := controllers.NewUserController(authService)
-	protectedController := controllers.NewProtectedController()
 
 	public := http.NewServeMux()
 	RegisterAuthRoutes(public, authController)
 
 	// Protected
 	protected := http.NewServeMux()
-	RegisterProtectedRoutes(protected, protectedController)
+	RegisterProtectedRoutes(protected)
 	protectedWithAuth := middlewares.AuthMiddlerWare(jwtService)(protected)
 
 	mux := http.NewServeMux()
