@@ -1,0 +1,52 @@
+name: Deploy Go API
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.4"
+
+      - name: Download Dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Build
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o server ./cmd/server
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}"> ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }}>> ~/.ssh/known_hosts
+
+      - name: Upload binary
+        run: |
+          scp \
+          -i ~/.ssh/deploy_key \
+          -P ${{ secrets.EC2_PORT }} \
+          server \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2.HOST }}:/home/ec2-user/Auth/Go/jwt-auth/server.new
+
+      - name: Deploy
+        run: |
+          ssh \
+          -i ~/.ssh/deploy_key \
+          -p ${{ secrets.EC2.PORT }} \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2.HOST}} \
+          :mv /home/ec2-user/Auth/Go/jwt-auth/server.new /home/ec2-user/Auth/Go/jwt-auth/server && sudo systemctl restart jwt-auth && sudo systemctl is-active --quiet jwt-auth
