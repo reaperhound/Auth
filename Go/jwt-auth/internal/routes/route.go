@@ -8,17 +8,25 @@ import (
 )
 
 func SetupRouter() *http.ServeMux {
-	fileSerivice := services.NewFileService()
+	// Dependencies
+	fileService := services.NewFileService()
 	jwtService := services.NewJwtService()
-	authService := services.NewAuthService(fileSerivice, jwtService)
+	qrService := services.NewQRService()
+
+	// Services
+	authService := services.NewAuthService(fileService, jwtService)
+	twoFaService := services.NewTwoFASerive(qrService, fileService)
+
+	// Controller
 	authController := controllers.NewUserController(authService)
+	prController := controllers.NewProtectedController()
+	twoFaController := controllers.NewTwoFAController(twoFaService)
 
 	public := http.NewServeMux()
 	RegisterAuthRoutes(public, authController)
 
-	// Protected
 	protected := http.NewServeMux()
-	RegisterProtectedRoutes(protected)
+	RegisterProtectedRoutes(protected, prController, twoFaController)
 	protectedWithAuth := middlewares.AuthMiddlerWare(jwtService)(protected)
 
 	mux := http.NewServeMux()
