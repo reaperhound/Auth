@@ -7,8 +7,14 @@ import (
 )
 
 func RegisterProtectedRoutes(mux *http.ServeMux) {
-	twoFaService := services.NewTwoFASerive()
+	// Dependencies
+	qrService := services.NewQRService()
+	fileService := services.NewFileService()
 
+	// Services
+	twoFaService := services.NewTwoFASerive(qrService, fileService)
+
+	// Controllers
 	pr := controllers.NewProtectedController()
 	twoFa := controllers.NewTwoFAController(twoFaService)
 
