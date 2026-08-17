@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    working-directory: Go/jwt-auth
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,7 +20,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.26.4"
+          go-version-file: Go/jwt-auth/go.mod
+          cache: true
 
       - name: Download Dependencies
         run: go mod download
@@ -25,8 +30,7 @@ jobs:
         run: go test ./...
 
       - name: Build
-        run: |
-          GOOS=linux GOARCH=amd64 go build -o server ./cmd/server
+        run: go build -o server ./cmd/server
 
       - name: Configure SSH
         run: |
@@ -41,12 +45,18 @@ jobs:
           -i ~/.ssh/deploy_key \
           -P ${{ secrets.EC2_PORT }} \
           server \
-          ${{ secrets.EC2_USER }}@${{ secrets.EC2.HOST }}:/home/ec2-user/Auth/Go/jwt-auth/server.new
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ec2-user/Auth/Go/jwt-auth/server.new
 
-      - name: Deploy
+      - name: Restart Service
+        working-directory: .
         run: |
-          ssh \
-          -i ~/.ssh/deploy_key \
-          -p ${{ secrets.EC2.PORT }} \
-          ${{ secrets.EC2_USER }}@${{ secrets.EC2.HOST}} \
-          :mv /home/ec2-user/Auth/Go/jwt-auth/server.new /home/ec2-user/Auth/Go/jwt-auth/server && sudo systemctl restart jwt-auth && sudo systemctl is-active --quiet jwt-auth
+          ssh -i ~/.ssh/deploy_key \
+          ${{ secrets.EC2_USER }}@{{ secrets.EC2_HOST }} \
+          "sudo systemctl restart jwt-auth"
+
+      - name: Verify Service
+        working-directory: .
+        run: |
+          ssh -i ~/.ssh/deploy_keys \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+          "sudo systemctl is-active jwt-auth"
